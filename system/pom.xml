@@ -7,7 +7,7 @@
         <artifactId>spring-cloud</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-
+    <groupId>com.yangxy.spring-cloud</groupId>
     <artifactId>system</artifactId>
     <packaging>pom</packaging>
 
