@@ -4,10 +4,10 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.yangxy</groupId>
-        <artifactId>spring-cloud</artifactId>
+        <artifactId>cloud</artifactId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
-    <groupId>com.yangxy.spring-cloud</groupId>
+    <groupId>com.yangxy.cloud</groupId>
     <artifactId>common</artifactId>
     <dependencies>
         <!-- Log4j2 -->
