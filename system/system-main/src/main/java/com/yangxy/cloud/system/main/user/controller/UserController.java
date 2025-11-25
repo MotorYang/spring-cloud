@@ -1,5 +1,6 @@
 package com.yangxy.cloud.system.main.user.controller;
 
+import com.yangxy.cloud.common.response.RestResult;
 import com.yangxy.cloud.system.main.user.dto.User;
 import com.yangxy.cloud.system.main.user.mapper.UserMapStruct;
 import com.yangxy.cloud.system.main.user.service.UserService;
@@ -24,9 +25,14 @@ public class UserController {
     private UserService userService;
 
     @GetMapping("/all")
-    List<UserVO> getAllUser() {
+    RestResult<List<UserVO>> getAllUser() {
         List<User> users = userService.getAllUser();
-        return users.stream().map(UserMapStruct.INSTANCE::userToUserVO).toList();
+        return RestResult.success(users.stream().map(UserMapStruct.INSTANCE::userToUserVO).toList());
+    }
+
+    @GetMapping("/create")
+    void createTestUser() {
+        userService.createTestData();
     }
 
 }

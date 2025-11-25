@@ -16,10 +16,10 @@ public class UserVO {
 
     private String id;
     private String account;
+    private String name;
     private String phone;
     private String gender;
     private String city;
     private String email;
     private String password;
-
 }

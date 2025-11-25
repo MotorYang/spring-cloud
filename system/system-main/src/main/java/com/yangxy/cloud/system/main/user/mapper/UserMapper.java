@@ -3,8 +3,6 @@ package com.yangxy.cloud.system.main.user.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.yangxy.cloud.system.main.user.entity.UserEntity;
 
-import java.util.List;
-
 /**
  * @author MotorYang
  * @email motoyangxy@outlook.com
@@ -12,6 +10,5 @@ import java.util.List;
  */
 public interface UserMapper extends BaseMapper<UserEntity> {
 
-    List<UserEntity> findAllUserByCity(String city);
 
 }

@@ -1,0 +1,12 @@
+server:
+  port: 8888
+spring:
+  profiles:
+    active: @activatedProperties@
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      whitelist:
+        - system/auth/login
+        - system/auth/register

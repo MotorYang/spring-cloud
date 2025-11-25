@@ -1,5 +1,7 @@
 spring:
   cloud:
+    gateway:
+      gateway-token: bKAgyPdf0jz9UvNAD1NwQwQc1ewWzreXHK732quM5UY=
     nacos:
       username: cloud_developer
       password: 745700Yxy@

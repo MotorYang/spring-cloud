@@ -33,6 +33,7 @@ public class UserEntity {
 
     @TableId(type = IdType.ASSIGN_UUID)
     private String id;
+    private String name;
     private String account;
     private String phone;
     private String gender;
@@ -46,6 +47,14 @@ public class UserEntity {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getAccount() {

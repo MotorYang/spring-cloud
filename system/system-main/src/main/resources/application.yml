@@ -2,6 +2,6 @@ server:
   port: 8081
 spring:
   application:
-    name: system-main
+    name: system
   profiles:
     active: @activatedProperties@

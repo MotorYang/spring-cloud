@@ -4,6 +4,7 @@ import com.yangxy.cloud.system.main.user.dto.User;
 import com.yangxy.cloud.system.main.user.entity.UserEntity;
 import com.yangxy.cloud.system.main.user.vo.UserVO;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
 
 /**
@@ -21,6 +22,7 @@ public interface UserMapStruct {
     User userEntityToUser(UserEntity userEntity);
 
     User userVoToUser(UserVO userVO);
-
+    
+    @Mapping(target = "password", ignore = true)
     UserVO userToUserVO(User user);
 }

@@ -1,0 +1,25 @@
+spring:
+  config:
+    import:
+      - nacos:${spring.application.name}.${spring.cloud.nacos.config.file-extension}
+  cloud:
+    nacos:
+      server-addr: 127.0.0.1:8848
+      username: cloud_developer
+      password: 745700Yxy@
+      config:
+        namespace: cloud_${spring.profiles.active}
+        file-extension: yaml
+      discovery:
+        namespace: ${spring.cloud.nacos.config.namespace}
+    gateway:
+      gateway-token: bKAgyPdf0jz9UvNAD1NwQwQc1ewWzreXHK732quM5UY=
+      default-filters: # 对所有路由生效
+        - AddRequestHeader=X-Gateway-Token, ${spring.cloud.gateway.gateway-token}
+      routes:
+        - id: system-service
+          uri: lb://system
+          predicates:
+            - Path=/system/**
+          filters:
+            - StripPrefix=1

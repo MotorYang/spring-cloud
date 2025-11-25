@@ -18,8 +18,8 @@ import java.sql.SQLException;
  * @email motoyangxy@outlook.com
  * @date 2025/11/24 07:36
  */
-@SpringBootApplication
 @EnableDiscoveryClient
+@SpringBootApplication(scanBasePackages = "com.yangxy.cloud")
 public class SystemMainApplication implements CommandLineRunner {
 
     @Resource
@@ -40,7 +40,8 @@ public class SystemMainApplication implements CommandLineRunner {
         try (Connection connection = dataSource.getConnection()) {
             log.info("[✔] 数据库连接成功！连接信息: URL={}, 用户名={}", connection.getMetaData().getURL(), connection.getMetaData().getUserName());
         } catch (SQLException e) {
-            log.error("[x] 数据库连接失败！错误信息: {}", e.getMessage());
+            log.error("[x] 数据库连接失败！App退出，错误信息: {}", e.getMessage());
+            System.exit(0);
         }
     }
 }

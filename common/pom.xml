@@ -9,11 +9,23 @@
     </parent>
     <groupId>com.yangxy.cloud</groupId>
     <artifactId>common</artifactId>
+    <packaging>jar</packaging>
     <dependencies>
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <!-- Log4j2 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-log4j2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 </project>
