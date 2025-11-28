@@ -1,0 +1,226 @@
+.
+├── common
+│   ├── pom.xml
+│   ├── src
+│   │   └── main
+│   │       └── java
+│   │           └── com
+│   │               └── yangxy
+│   │                   └── cloud
+│   │                       └── common
+│   │                           ├── exception
+│   │                           │   ├── GlobalExceptionHandler.java
+│   │                           │   └── ServiceException.java
+│   │                           ├── request
+│   │                           └── response
+│   │                               ├── ResponseStatusEnums.java
+│   │                               └── RestResult.java
+│   └── target
+│       ├── classes
+│       │   └── com
+│       │       └── yangxy
+│       │           └── cloud
+│       │               └── common
+│       │                   ├── exception
+│       │                   │   ├── GlobalExceptionHandler.class
+│       │                   │   └── ServiceException.class
+│       │                   └── response
+│       │                       ├── ResponseStatusEnums.class
+│       │                       └── RestResult.class
+│       └── generated-sources
+│           └── annotations
+├── gateway
+│   ├── pom.xml
+│   ├── src
+│   │   └── main
+│   │       ├── java
+│   │       │   └── com
+│   │       │       └── yangxy
+│   │       │           └── cloud
+│   │       │               └── gateway
+│   │       │                   ├── config
+│   │       │                   │   └── SecurityConfig.java
+│   │       │                   ├── filter
+│   │       │                   │   └── AuthGlobalFilter.java
+│   │       │                   ├── GatewayApplication.java
+│   │       │                   └── properties
+│   │       │                       └── CustomGatewayProperties.java
+│   │       └── resources
+│   │           ├── application-dev.yml
+│   │           ├── application-prod.yml
+│   │           ├── application-uat.yml
+│   │           └── application.yml
+│   └── target
+│       ├── classes
+│       │   ├── application-dev.yml
+│       │   ├── application-prod.yml
+│       │   ├── application-uat.yml
+│       │   ├── application.yml
+│       │   └── com
+│       │       └── yangxy
+│       │           └── cloud
+│       │               └── gateway
+│       │                   ├── config
+│       │                   │   ├── SecurityConfig$JwtAuthenticationConverter.class
+│       │                   │   └── SecurityConfig.class
+│       │                   ├── filter
+│       │                   │   └── AuthGlobalFilter.class
+│       │                   ├── GatewayApplication.class
+│       │                   └── properties
+│       │                       └── CustomGatewayProperties.class
+│       └── generated-sources
+│           └── annotations
+├── logs
+│   ├── 2025-11
+│   │   ├── system-main-2025-11-24-1.log.gz
+│   │   └── system-main-2025-11-25-1.log.gz
+│   └── system-main.log
+├── pom.xml
+├── security
+│   ├── pom.xml
+│   ├── src
+│   │   └── main
+│   │       └── java
+│   │           └── com
+│   │               └── yangxy
+│   │                   └── cloud
+│   │                       └── security
+│   │                           ├── config
+│   │                           │   └── SystemSecurityConfig.java
+│   │                           ├── filter
+│   │                           │   └── GatewayProtectFilter.java
+│   │                           ├── utils
+│   │                           │   └── JwtUtils.java
+│   │                           └── vo
+│   │                               └── LoginRequest.java
+│   └── target
+│       ├── classes
+│       │   └── com
+│       │       └── yangxy
+│       │           └── cloud
+│       │               └── security
+│       │                   ├── config
+│       │                   │   └── SystemSecurityConfig.class
+│       │                   ├── filter
+│       │                   │   └── GatewayProtectFilter.class
+│       │                   ├── utils
+│       │                   │   └── JwtUtils.class
+│       │                   └── vo
+│       │                       └── LoginRequest.class
+│       └── generated-sources
+│           └── annotations
+├── spring-cloud.iml
+├── struct.txt
+└── system
+    ├── pom.xml
+    ├── system-api
+    │   ├── pom.xml
+    │   └── src
+    │       └── main
+    │           ├── java
+    │           │   └── com
+    │           │       └── yangxy
+    │           │           ├── cloud
+    │           │           │   └── system
+    │           │           │       └── api
+    │           │           └── system
+    │           └── resources
+    │               └── application.properties
+    ├── system-feign
+    │   ├── pom.xml
+    │   └── src
+    │       └── main
+    │           ├── java
+    │           │   └── com
+    │           │       └── yangxy
+    │           │           ├── cloud
+    │           │           │   └── system
+    │           │           │       └── feign
+    │           │           └── system
+    │           └── resources
+    │               └── application.properties
+    └── system-main
+        ├── pom.xml
+        ├── src
+        │   └── main
+        │       ├── java
+        │       │   └── com
+        │       │       └── yangxy
+        │       │           └── cloud
+        │       │               └── system
+        │       │                   └── main
+        │       │                       ├── auth
+        │       │                       │   └── controller
+        │       │                       │       └── AuthController.java
+        │       │                       ├── config
+        │       │                       │   └── UserConfig.java
+        │       │                       ├── SystemMainApplication.java
+        │       │                       └── user
+        │       │                           ├── controller
+        │       │                           │   └── UserController.java
+        │       │                           ├── dto
+        │       │                           │   └── User.java
+        │       │                           ├── entity
+        │       │                           │   └── UserEntity.java
+        │       │                           ├── mapper
+        │       │                           │   ├── UserMapper.java
+        │       │                           │   └── UserMapStruct.java
+        │       │                           ├── service
+        │       │                           │   ├── impl
+        │       │                           │   │   └── UserServiceImpl.java
+        │       │                           │   └── UserService.java
+        │       │                           └── vo
+        │       │                               └── UserVO.java
+        │       └── resources
+        │           ├── application-dev.yml
+        │           ├── application-prod.yml
+        │           ├── application-uat.yml
+        │           ├── application.yml
+        │           └── log4j2.xml
+        └── target
+            ├── classes
+            │   ├── application-dev.yml
+            │   ├── application-prod.yml
+            │   ├── application-uat.yml
+            │   ├── application.yml
+            │   ├── com
+            │   │   └── yangxy
+            │   │       └── cloud
+            │   │           └── system
+            │   │               └── main
+            │   │                   ├── auth
+            │   │                   │   └── controller
+            │   │                   │       └── AuthController.class
+            │   │                   ├── config
+            │   │                   │   └── UserConfig.class
+            │   │                   ├── SystemMainApplication.class
+            │   │                   └── user
+            │   │                       ├── controller
+            │   │                       │   └── UserController.class
+            │   │                       ├── dto
+            │   │                       │   └── User.class
+            │   │                       ├── entity
+            │   │                       │   └── UserEntity.class
+            │   │                       ├── mapper
+            │   │                       │   ├── UserMapper.class
+            │   │                       │   ├── UserMapStruct.class
+            │   │                       │   └── UserMapStructImpl.class
+            │   │                       ├── service
+            │   │                       │   ├── impl
+            │   │                       │   │   └── UserServiceImpl.class
+            │   │                       │   └── UserService.class
+            │   │                       └── vo
+            │   │                           └── UserVO.class
+            │   └── log4j2.xml
+            └── generated-sources
+                └── annotations
+                    └── com
+                        └── yangxy
+                            └── cloud
+                                └── system
+                                    └── main
+                                        └── user
+                                            └── mapper
+                                                └── UserMapStructImpl.java
+
+142 directories, 82 files

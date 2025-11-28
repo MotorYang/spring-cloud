@@ -35,47 +35,47 @@ public class AuthController {
 
     @PostMapping("/login")
     public Map<String, Object> login(@RequestBody LoginRequest loginRequest) {
-        // 1.查询用户
+        // 1. Query user
         UserEntity user = userMapper.selectOne(new LambdaQueryWrapper<UserEntity>()
                 .eq(UserEntity::getAccount, loginRequest.getAccount()));
         if (user == null) {
-            throw new ServiceException("用户不存在!");
+            throw new ServiceException("User does not exist!");
         }
-        // 2.校验密码
+        // 2. Validate password
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
-            throw new ServiceException("密码错误");
+            throw new ServiceException("Incorrect password");
         }
-        // 3.生成Token
+        // 3. Generate token
         String token = JwtUtils.generateToken(user.getAccount(), user.getId());
         return Map.of("token", token);
     }
 
     @PostMapping("/register")
     public RestResult<UserVO> register(@RequestBody UserVO userVO) {
-        // 1.校验
+        // 1. Validate
         if (userVO.getAccount().isBlank()) {
-            throw new ServiceException("账号不能为空!");
+            throw new ServiceException("Account cannot be empty!");
         }
         if (userVO.getPassword().isBlank()) {
-            throw new ServiceException("密码不能为空!");
+            throw new ServiceException("Password cannot be empty!");
         }
-        // 2.查询用户
+        // 2. Check if user exists
         UserEntity exitsUser = userMapper.selectOne(new LambdaQueryWrapper<UserEntity>()
                 .eq(UserEntity::getAccount, userVO.getAccount())
         );
         if (exitsUser != null) {
-            throw new ServiceException("用户已存在!");
+            throw new ServiceException("User already exists!");
         }
-        // 3.注册用户
+        // 3. Register user
         User user = UserMapStruct.INSTANCE.userVoToUser(userVO);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userMapper.insert(UserMapStruct.INSTANCE.userToUserEntity(user));
-        // 4.返回注册好的用户
+        // 4. Return the registered user
         UserEntity userEntity = userMapper.selectOne(new LambdaQueryWrapper<UserEntity>()
                 .eq(UserEntity::getAccount, userVO.getAccount())
         );
         if (userEntity == null) {
-            throw new ServiceException("用户注册失败!");
+            throw new ServiceException("User registration failed!");
         }
         User dbUser = UserMapStruct.INSTANCE.userEntityToUser(userEntity);
         return RestResult.success(UserMapStruct.INSTANCE.userToUserVO(dbUser));
