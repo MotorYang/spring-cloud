@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/cloud
+    username: cloud
+    password: CloudDev
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update   # 可选，表示 JPA 会根据实体自动更新数据库表结构
+    show-sql: true       # 打印 SQL 语句
+    properties:
+      hibernate.format_sql: true  # 格式化 SQL
