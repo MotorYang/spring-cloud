@@ -4,7 +4,7 @@ spring:
       - nacos:${spring.application.name}.${spring.cloud.nacos.config.file-extension}
   cloud:
     nacos:
-      server-addr: 127.0.0.1:8848
+      server-addr: 192.168.1.97:8848
       username: cloud_developer
       password: 745700Yxy@
       config:
@@ -23,3 +23,6 @@ spring:
             - Path=/system/**
           filters:
             - StripPrefix=1
+    cors:
+      - http://localhost:5173
+      - http://127.0.0.1:5173

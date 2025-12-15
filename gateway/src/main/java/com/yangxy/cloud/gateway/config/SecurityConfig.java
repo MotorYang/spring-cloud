@@ -16,10 +16,14 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
 import org.springframework.security.web.server.authentication.ServerAuthenticationConverter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author MotorYang
@@ -40,6 +44,7 @@ public class SecurityConfig {
         AuthenticationWebFilter jwtFilter = new AuthenticationWebFilter(authenticationManager());
         jwtFilter.setServerAuthenticationConverter(new JwtAuthenticationConverter());
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange
                         // 放行登陆接口：注意这里匹配的是gateway转发后的路径
@@ -49,6 +54,26 @@ public class SecurityConfig {
                 .addFilterAt(jwtFilter, SecurityWebFiltersOrder.AUTHENTICATION);
         return http.build();
     }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        // 前端地址
+        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        // 允许方法
+        config.setAllowedMethods(
+                List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        );
+        // 允许的请求头
+        config.setAllowedHeaders(List.of("*"));
+        // 允许携带 cookie / authorization
+        config.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source =
+                new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+
 
     /**
      * 第一步：认证管理器，验证Token有效性
