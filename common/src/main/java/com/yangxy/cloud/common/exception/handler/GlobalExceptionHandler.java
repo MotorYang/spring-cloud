@@ -1,5 +1,6 @@
-package com.yangxy.cloud.common.exception;
+package com.yangxy.cloud.common.exception.handler;
 
+import com.yangxy.cloud.common.exception.BusinessException;
 import com.yangxy.cloud.common.response.RestResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -18,15 +19,19 @@ public class GlobalExceptionHandler {
     /**
      * 拦截业务异常
      */
-    @ExceptionHandler(ServiceException.class)
-    public RestResult<Void> handleServiceException(ServiceException e) {
+    @ExceptionHandler(BusinessException.class)
+    public RestResult<Void> handleServiceException(BusinessException e) {
         // 业务预期内的错误，不需要打印堆栈，只记录警告即可
-        log.warn("业务阻断: {}", e.getMessage());
-        return RestResult.error(e.getMessage());
+        if (e.getCode() == 0) {
+            log.warn("业务阻断: {}", e.getMessage());
+            return RestResult.error(e.getMessage());
+        }
+        log.warn("业务阻断({}): {}", e.getCode() , e.getMessage());
+        return RestResult.build(e.getCode(), e.getMessage(), null);
     }
 
     /**
-     * 拦截所有 RuntimeException (包括你抛出的 "密码错误")
+     * 拦截所有 RuntimeException
      */
     @ExceptionHandler(RuntimeException.class)
     public RestResult<Void> handleRuntimeException(RuntimeException e) {

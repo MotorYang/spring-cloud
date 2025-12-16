@@ -1,8 +1,11 @@
 package com.yangxy.cloud.gateway.config;
 
+import com.yangxy.cloud.gateway.properties.CorsProperties;
 import com.yangxy.cloud.gateway.properties.CustomGatewayProperties;
 import com.yangxy.cloud.security.utils.JwtUtils;
 import jakarta.annotation.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -36,7 +39,11 @@ import java.util.List;
 public class SecurityConfig {
 
     @Resource
+    private CorsProperties corsProperties;
+    @Resource
     private CustomGatewayProperties customGatewayProperties;
+
+    private Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
@@ -59,17 +66,17 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         // 前端地址
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOrigins(corsProperties.getAllowedOrigins());
+        for (String allowedOrigin : corsProperties.getAllowedOrigins()) {
+            logger.info("Allowed-Origins: ".concat(allowedOrigin));
+        }
         // 允许方法
-        config.setAllowedMethods(
-                List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")
-        );
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         // 允许的请求头
         config.setAllowedHeaders(List.of("*"));
         // 允许携带 cookie / authorization
         config.setAllowCredentials(true);
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
     }
