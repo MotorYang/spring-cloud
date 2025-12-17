@@ -7,8 +7,8 @@
         </Console>
 
         <RollingFile name="RollingFile"
-                     fileName="logs/system.log"
-                     filePattern="logs/$${date:yyyy-MM}/system-%d{yyyy-MM-dd}-%i.log.gz"
+                     fileName="logs/cartoon.log"
+                     filePattern="logs/$${date:yyyy-MM}/system-main-%d{yyyy-MM-dd}-%i.log.gz"
                      ignoreExceptions="false">
 
             <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n%throwable"/>

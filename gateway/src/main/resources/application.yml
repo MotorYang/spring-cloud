@@ -5,8 +5,3 @@ spring:
     active: @activatedProperties@
   application:
     name: gateway
-  cloud:
-    gateway:
-      whitelist:
-        - system/auth/login
-        - system/auth/register

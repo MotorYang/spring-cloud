@@ -20,6 +20,7 @@
         <module>common</module>
         <module>security</module>
         <module>gateway</module>
+        <module>cartoon</module>
     </modules>
 
     <properties>
@@ -30,7 +31,7 @@
         <spring.alibaba.cloud.vresion>2023.0.1.0</spring.alibaba.cloud.vresion>
         <lombok.version>1.18.42</lombok.version>
         <postgresql.version>42.6.0</postgresql.version>
-        <mybaitsplus.version>3.5.14</mybaitsplus.version>
+        <mybaitsplus.version>3.5.5</mybaitsplus.version>
         <mapstruct.version>1.6.3</mapstruct.version>
         <jjwt.version>0.11.5</jjwt.version>
     </properties>

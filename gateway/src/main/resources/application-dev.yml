@@ -23,6 +23,12 @@ spring:
             - Path=/system/**
           filters:
             - StripPrefix=1
+        - id: cartoon-service
+          uri: lb://cartoon
+          predicates:
+            - Path=/cartoon/**
+          filters:
+            - StripPrefix=1
     cors:
       allowed-origins:
         - http://localhost:5174

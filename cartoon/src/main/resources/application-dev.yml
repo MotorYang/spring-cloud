@@ -1,0 +1,17 @@
+spring:
+  cloud:
+    gateway:
+      gateway-token: bKAgyPdf0jz9UvNAD1NwQwQc1ewWzreXHK732quM5UY=
+    nacos:
+      username: cloud_developer
+      password: 745700Yxy@
+      config:
+        server-addr: 192.168.1.97:8848
+        namespace: cloud_${spring.profiles.active}
+        file-extension: yaml
+      discovery:
+        server-addr: ${spring.cloud.nacos.config.server-addr}
+        namespace: ${spring.cloud.nacos.config.namespace}
+  config:
+    import:
+      - nacos:${spring.application.name}.${spring.cloud.nacos.config.file-extension}
