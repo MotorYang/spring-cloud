@@ -7,6 +7,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
 
@@ -49,7 +51,7 @@ public class DataInitializer implements CommandLineRunner {
                         In conclusion, maximize your comfort to maximize your output.
                         """,
                         "DevDood",
-                        LocalDate.of(2023, 10, 24),
+                        OffsetDateTime.of(2025, 10, 26, 0, 0, 0, 0, ZoneOffset.ofHours(+8)),
                         "Lifestyle",
                         "https://picsum.photos/800/400?random=1",
                         Arrays.asList("Coding", "Humor", "WFH"),
@@ -76,7 +78,7 @@ public class DataInitializer implements CommandLineRunner {
                         Ultimately, we're all winners because we get to build cool stuff.
                         """,
                         "TechToon",
-                        LocalDate.of(2023, 10, 25),
+                        OffsetDateTime.of(2025, 10, 26, 0, 0, 0, 0, ZoneOffset.ofHours(+8)),
                         "Tech",
                         "https://picsum.photos/800/400?random=2",
                         Arrays.asList("React", "Vue", "Frontend"),
@@ -95,7 +97,7 @@ public class DataInitializer implements CommandLineRunner {
                         5. **Water**: Boring, but necessary. Stay hydrated, folks.
                         """,
                         "SnackMaster",
-                        LocalDate.of(2023, 10, 26),
+                        OffsetDateTime.of(2025, 10, 26, 0, 0, 0, 0, ZoneOffset.ofHours(+8)),
                         "Food",
                         "https://picsum.photos/800/400?random=3",
                         Arrays.asList("Food", "Health", "Tips"),
@@ -109,7 +111,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private Article createArticle(String id, String title, String excerpt, String content,
-                                  String author, LocalDate date, String category,
+                                  String author, OffsetDateTime date, String category,
                                   String imageUrl, List<String> tags, Integer views) {
         Article article = new Article();
         article.setId(id);

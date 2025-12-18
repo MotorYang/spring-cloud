@@ -59,6 +59,9 @@ public class SecurityConfig {
                         .anyExchange().authenticated()
                 )
                 .addFilterAt(jwtFilter, SecurityWebFiltersOrder.AUTHENTICATION);
+        for (String s : customGatewayProperties.getWhitelist()) {
+            logger.info("WhiteRoute: {}", s);
+        }
         return http.build();
     }
 
