@@ -1,37 +1,50 @@
 package com.yangxy.cloud.gemini.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Google Gemini AI 服务（REST API 实现）
- * <p>
- * 直接调用 Google AI API，不依赖 Vertex AI SDK
- * 更简单、更可控
+ * Google Gemini AI 服务 - Redis 版本
+ * 使用 Redis 存储会话历史,支持分布式部署
  */
 @Slf4j
 @Service
 public class GeminiAiRestService {
 
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+
     @Value("${google.ai.api-key}")
     private String apiKey;
 
-    @Value("${google.ai.model:gemini-2.5-flash}")
+    @Value("${google.ai.model:gemini-2.0-flash-exp}")
     private String model;
+
+    // 会话过期时间(秒) - 从配置文件读取
+    @Value("${chat.session.ttl:3600}")
+    private long sessionTtlSeconds;
+
+    // 每个会话最大消息数
+    @Value("${chat.session.max-messages:100}")
+    private int maxMessagesPerSession;
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    // 存储聊天历史
-    private final Map<String, List<Map<String, Object>>> chatHistories = new ConcurrentHashMap<>();
+    // Redis Key 前缀
+    private static final String SESSION_PREFIX = "chat:session:";
+    private static final String SESSION_STATS_KEY = "chat:stats";
 
     // Google AI API 端点
     private static final String API_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
@@ -105,45 +118,327 @@ public class GeminiAiRestService {
     }
 
     /**
-     * 聊天对话
+     * 聊天对话 - Redis 版本
      */
     public String chat(String message, String sessionId) {
         try {
-            // 获取或创建聊天历史
-            List<Map<String, Object>> history = chatHistories.computeIfAbsent(
-                    sessionId,
-                    k -> {
-                        List<Map<String, Object>> newHistory = new ArrayList<>();
-                        // 添加系统指令
-                        newHistory.add(createMessage("user", CHAT_SYSTEM_INSTRUCTION));
-                        newHistory.add(createMessage("model", "Understood. I'm ready to help!"));
-                        return newHistory;
-                    }
-            );
+            String redisKey = SESSION_PREFIX + sessionId;
+
+            // 从 Redis 获取会话历史
+            List<Map<String, Object>> history = getSessionHistory(redisKey);
+
+            // 如果会话不存在,创建新会话
+            if (history == null || history.isEmpty()) {
+                history = createNewSession();
+                log.info("创建新会话: sessionId={}", sessionId);
+                incrementStats("totalSessions");
+            } else {
+                log.debug("继续现有会话: sessionId={}, 当前消息数={}", sessionId, history.size());
+            }
+
+            // 限制消息数量 - 防止单个会话过大
+            if (history.size() > maxMessagesPerSession) {
+                // 保留系统指令(前2条)和最近的消息
+                List<Map<String, Object>> systemMessages = history.subList(0, 2);
+                List<Map<String, Object>> recentMessages = history.subList(
+                        history.size() - maxMessagesPerSession + 2,
+                        history.size()
+                );
+                history = new ArrayList<>();
+                history.addAll(systemMessages);
+                history.addAll(recentMessages);
+                log.info("会话 {} 消息数超限,已清理早期消息,保留最近{}条",
+                        sessionId, maxMessagesPerSession);
+            }
 
             // 添加用户消息
             history.add(createMessage("user", message));
 
-            // 调用 API
+            // 调用 AI API
             String response = generateContentWithHistory(history);
 
-            // 添加 AI 回复到历史
+            // 添加 AI 回复
             history.add(createMessage("model", response));
+
+            // 保存到 Redis 并设置过期时间
+            saveSessionHistory(redisKey, history);
+
+            // 更新统计信息
+            incrementStats("totalMessages");
+
+            log.info("会话 {} 对话成功: 消息数={}, TTL={}秒",
+                    sessionId, history.size(), sessionTtlSeconds);
 
             return response;
 
         } catch (Exception e) {
-            log.error("聊天失败: sessionId={}, message={}", sessionId, message, e);
+            log.error("Redis聊天失败: sessionId={}, message={}", sessionId, message, e);
             throw new RuntimeException("聊天失败: " + e.getMessage());
         }
     }
 
     /**
-     * 清除聊天会话
+     * 从 Redis 获取会话历史
+     */
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> getSessionHistory(String redisKey) {
+        try {
+            Object value = redisTemplate.opsForValue().get(redisKey);
+            if (value == null) {
+                return null;
+            }
+
+            // 刷新 TTL
+            redisTemplate.expire(redisKey, sessionTtlSeconds, TimeUnit.SECONDS);
+
+            // 转换为 List
+            if (value instanceof List) {
+                return (List<Map<String, Object>>) value;
+            }
+
+            // 如果是 JSON 字符串,解析它
+            if (value instanceof String) {
+                return objectMapper.readValue(
+                        (String) value,
+                        new TypeReference<List<Map<String, Object>>>() {}
+                );
+            }
+
+            log.warn("Redis 中的数据类型不正确: {}", value.getClass());
+            return null;
+
+        } catch (Exception e) {
+            log.error("从 Redis 获取会话历史失败: key={}", redisKey, e);
+            return null;
+        }
+    }
+
+    /**
+     * 保存会话历史到 Redis
+     */
+    private void saveSessionHistory(String redisKey, List<Map<String, Object>> history) {
+        try {
+            redisTemplate.opsForValue().set(
+                    redisKey,
+                    history,
+                    sessionTtlSeconds,
+                    TimeUnit.SECONDS
+            );
+            log.debug("会话已保存到Redis: key={}, 消息数={}, TTL={}秒",
+                    redisKey, history.size(), sessionTtlSeconds);
+        } catch (Exception e) {
+            log.error("保存会话历史到 Redis 失败: key={}", redisKey, e);
+            throw new RuntimeException("保存会话失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 创建新会话
+     */
+    private List<Map<String, Object>> createNewSession() {
+        List<Map<String, Object>> history = new ArrayList<>();
+        history.add(createMessage("user", CHAT_SYSTEM_INSTRUCTION));
+        history.add(createMessage("model", "Understood. I'm ready to help!"));
+        return history;
+    }
+
+    /**
+     * 清除指定会话
      */
     public void clearChatSession(String sessionId) {
-        chatHistories.remove(sessionId);
-        log.info("已清除聊天会话: {}", sessionId);
+        try {
+            String redisKey = SESSION_PREFIX + sessionId;
+            Boolean deleted = redisTemplate.delete(redisKey);
+
+            if (Boolean.TRUE.equals(deleted)) {
+                log.info("从Redis清除会话: sessionId={}", sessionId);
+            } else {
+                log.warn("尝试清除不存在的会话: sessionId={}", sessionId);
+            }
+        } catch (Exception e) {
+            log.error("清除会话失败: sessionId={}", sessionId, e);
+            throw new RuntimeException("清除会话失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 清除所有会话
+     */
+    public void clearAllSessions() {
+        try {
+            Set<String> keys = redisTemplate.keys(SESSION_PREFIX + "*");
+            if (keys != null && !keys.isEmpty()) {
+                Long deletedCount = redisTemplate.delete(keys);
+                log.info("清除所有聊天会话: 共{}个", deletedCount);
+            } else {
+                log.info("没有会话需要清除");
+            }
+        } catch (Exception e) {
+            log.error("清除所有会话失败", e);
+            throw new RuntimeException("清除所有会话失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取活跃会话数量
+     */
+    public int getActiveChatSessions() {
+        try {
+            Set<String> keys = redisTemplate.keys(SESSION_PREFIX + "*");
+            return keys != null ? keys.size() : 0;
+        } catch (Exception e) {
+            log.error("获取活跃会话数量失败", e);
+            return 0;
+        }
+    }
+
+    /**
+     * 获取会话统计信息
+     */
+    public Map<String, Object> getSessionStats() {
+        try {
+            Map<String, Object> stats = new HashMap<>();
+
+            // 基本统计
+            Set<String> keys = redisTemplate.keys(SESSION_PREFIX + "*");
+            int totalSessions = keys != null ? keys.size() : 0;
+            stats.put("totalSessions", totalSessions);
+            stats.put("sessionTtlSeconds", sessionTtlSeconds);
+            stats.put("maxMessagesPerSession", maxMessagesPerSession);
+
+            // 消息统计
+            int totalMessages = 0;
+            int minMessages = Integer.MAX_VALUE;
+            int maxMessages = 0;
+            Map<String, Long> ttlDistribution = new LinkedHashMap<>();
+            ttlDistribution.put("0-15min", 0L);
+            ttlDistribution.put("15-30min", 0L);
+            ttlDistribution.put("30-60min", 0L);
+            ttlDistribution.put("60min+", 0L);
+
+            if (keys != null && !keys.isEmpty()) {
+                for (String key : keys) {
+                    // 获取消息数
+                    List<Map<String, Object>> history = getSessionHistory(key);
+                    if (history != null) {
+                        int msgCount = history.size();
+                        totalMessages += msgCount;
+                        minMessages = Math.min(minMessages, msgCount);
+                        maxMessages = Math.max(maxMessages, msgCount);
+                    }
+
+                    // 获取 TTL
+                    Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
+                    if (ttl != null && ttl > 0) {
+                        long ttlMinutes = ttl / 60;
+                        if (ttlMinutes < 15) {
+                            ttlDistribution.merge("0-15min", 1L, Long::sum);
+                        } else if (ttlMinutes < 30) {
+                            ttlDistribution.merge("15-30min", 1L, Long::sum);
+                        } else if (ttlMinutes < 60) {
+                            ttlDistribution.merge("30-60min", 1L, Long::sum);
+                        } else {
+                            ttlDistribution.merge("60min+", 1L, Long::sum);
+                        }
+                    }
+                }
+            }
+
+            stats.put("totalMessages", totalMessages);
+            stats.put("avgMessagesPerSession",
+                    totalSessions > 0 ? totalMessages / totalSessions : 0);
+            stats.put("minMessagesPerSession", totalSessions > 0 ? minMessages : 0);
+            stats.put("maxMessagesPerSession", maxMessages);
+            stats.put("ttlDistribution", ttlDistribution);
+
+            // 全局统计(从 Redis Hash 获取)
+            Map<Object, Object> globalStats = redisTemplate.opsForHash().entries(SESSION_STATS_KEY);
+            stats.put("globalStats", globalStats);
+
+            return stats;
+
+        } catch (Exception e) {
+            log.error("获取会话统计失败", e);
+            return new HashMap<>();
+        }
+    }
+
+    /**
+     * 增加统计计数
+     */
+    private void incrementStats(String field) {
+        try {
+            redisTemplate.opsForHash().increment(SESSION_STATS_KEY, field, 1);
+        } catch (Exception e) {
+            log.error("更新统计信息失败: field={}", field, e);
+        }
+    }
+
+    /**
+     * 刷新会话 TTL
+     */
+    public void refreshSessionTtl(String sessionId) {
+        try {
+            String redisKey = SESSION_PREFIX + sessionId;
+            Boolean exists = redisTemplate.hasKey(redisKey);
+
+            if (Boolean.TRUE.equals(exists)) {
+                redisTemplate.expire(redisKey, sessionTtlSeconds, TimeUnit.SECONDS);
+                log.debug("刷新会话TTL: sessionId={}, TTL={}秒", sessionId, sessionTtlSeconds);
+            }
+        } catch (Exception e) {
+            log.error("刷新会话TTL失败: sessionId={}", sessionId, e);
+        }
+    }
+
+    /**
+     * 检查会话是否存在
+     */
+    public boolean sessionExists(String sessionId) {
+        try {
+            String redisKey = SESSION_PREFIX + sessionId;
+            return redisTemplate.hasKey(redisKey);
+        } catch (Exception e) {
+            log.error("检查会话是否存在失败: sessionId={}", sessionId, e);
+            return false;
+        }
+    }
+
+    /**
+     * 获取会话详细信息
+     */
+    public Map<String, Object> getSessionDetails(String sessionId) {
+        try {
+            String redisKey = SESSION_PREFIX + sessionId;
+            Map<String, Object> details = new HashMap<>();
+
+            // 检查会话是否存在
+            Boolean exists = redisTemplate.hasKey(redisKey);
+            details.put("exists", exists);
+
+            if (Boolean.TRUE.equals(exists)) {
+                // 获取会话历史
+                List<Map<String, Object>> history = getSessionHistory(redisKey);
+                details.put("messageCount", history != null ? history.size() : 0);
+
+                // 获取剩余 TTL
+                Long ttl = redisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
+                details.put("ttlSeconds", ttl);
+                details.put("ttlMinutes", ttl != null ? ttl / 60 : 0);
+
+                // 获取最后一条消息
+                if (history != null && !history.isEmpty()) {
+                    Map<String, Object> lastMessage = history.get(history.size() - 1);
+                    details.put("lastMessage", lastMessage);
+                }
+            }
+
+            return details;
+
+        } catch (Exception e) {
+            log.error("获取会话详细信息失败: sessionId={}", sessionId, e);
+            return new HashMap<>();
+        }
     }
 
     /**
@@ -151,20 +446,13 @@ public class GeminiAiRestService {
      */
     private String generateContent(String prompt) {
         try {
-            // 构建请求 URL
             String url = String.format(API_ENDPOINT, model, apiKey);
 
-            // 构建请求体
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("contents", List.of(
-                    Map.of(
-                            "parts", List.of(
-                                    Map.of("text", prompt)
-                            )
-                    )
+                    Map.of("parts", List.of(Map.of("text", prompt)))
             ));
 
-            // 发送请求
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
 
@@ -177,7 +465,6 @@ public class GeminiAiRestService {
                     String.class
             );
 
-            // 解析响应
             return extractTextFromResponse(response.getBody());
 
         } catch (Exception e) {
@@ -198,9 +485,7 @@ public class GeminiAiRestService {
             for (Map<String, Object> msg : history) {
                 contents.add(Map.of(
                         "role", msg.get("role"),
-                        "parts", List.of(
-                                Map.of("text", msg.get("text"))
-                        )
+                        "parts", List.of(Map.of("text", msg.get("text")))
                 ));
             }
 
@@ -232,7 +517,6 @@ public class GeminiAiRestService {
     private String extractTextFromResponse(String responseBody) throws Exception {
         JsonNode root = objectMapper.readTree(responseBody);
 
-        // 提取文本：candidates[0].content.parts[0].text
         JsonNode candidates = root.path("candidates");
         if (candidates.isEmpty()) {
             throw new RuntimeException("API 响应中没有候选结果");
@@ -264,21 +548,5 @@ public class GeminiAiRestService {
         message.put("role", role);
         message.put("text", text);
         return message;
-    }
-
-    /**
-     * 获取活跃会话数量
-     */
-    public int getActiveChatSessions() {
-        return chatHistories.size();
-    }
-
-    /**
-     * 清除所有会话
-     */
-    public void clearAllSessions() {
-        int count = chatHistories.size();
-        chatHistories.clear();
-        log.info("已清除所有聊天会话，共 {} 个", count);
     }
 }

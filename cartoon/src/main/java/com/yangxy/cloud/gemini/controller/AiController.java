@@ -5,8 +5,8 @@ import com.yangxy.cloud.gemini.dto.ChatRequest;
 import com.yangxy.cloud.gemini.dto.GenerateBlogRequest;
 import com.yangxy.cloud.gemini.dto.GenerateSummaryRequest;
 import com.yangxy.cloud.gemini.service.GeminiAiRestService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -14,33 +14,25 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * AI 功能 Controller
- *
- * 提供博客生成、摘要生成和聊天功能
- *
- * 注意：所有接口都受到限流保护（每个 IP 每分钟最多 5 次请求）
+ * AI 控制器
  */
 @Slf4j
 @RestController
 @RequestMapping("/ai")
-@RequiredArgsConstructor
 public class AiController {
 
-    private final GeminiAiRestService geminiAiService;
+    @Autowired
+    private GeminiAiRestService geminiAiService;
 
     /**
      * 生成博客内容
-     * POST /ai/generate-blog
-     *
-     * @param request 生成请求
-     * @return 生成的博客内容（Markdown 格式）
+     * POST /cartoon/ai/generate-blog
      */
     @PostMapping("/generate-blog")
     public RestResult<Map<String, Object>> generateBlog(@RequestBody GenerateBlogRequest request) {
         try {
             log.info("收到生成博客请求: title={}, lang={}", request.getTitle(), request.getLang());
 
-            // 参数验证
             if (request.getTitle() == null || request.getTitle().trim().isEmpty()) {
                 return RestResult.error("标题不能为空！");
             }
@@ -113,15 +105,17 @@ public class AiController {
 
             // 参数验证
             if (request.getMessage() == null || request.getMessage().trim().isEmpty()) {
-                return RestResult.error("标题不能为空！");
+                return RestResult.error("消息不能为空！");
             }
 
-            // 如果没有 sessionId，生成一个
+            // 如果没有 sessionId,生成一个
             String sessionId = request.getSessionId();
             if (sessionId == null || sessionId.isEmpty()) {
                 sessionId = UUID.randomUUID().toString();
+                log.info("生成新会话ID: {}", sessionId);
             }
 
+            // 调用 Redis 服务
             String reply = geminiAiService.chat(request.getMessage(), sessionId);
 
             Map<String, Object> response = new HashMap<>();
@@ -132,32 +126,79 @@ public class AiController {
 
         } catch (Exception e) {
             log.error("聊天失败", e);
-            return RestResult.build(12001, "生成失败", null);
+            return RestResult.build(12001, "聊天失败", null);
         }
     }
 
     /**
-     * 清除聊天会话
-     * DELETE /ai/chat/{sessionId}
-     *
-     * @param sessionId 会话ID
-     * @return 成功消息
+     * 清除指定会话
+     * DELETE /cartoon/ai/chat/{sessionId}
      */
     @DeleteMapping("/chat/{sessionId}")
-    public RestResult<String> clearChatSession(@PathVariable String sessionId) {
+    public RestResult<Void> clearChatSession(@PathVariable String sessionId) {
         try {
+            log.info("收到清除会话请求: sessionId={}", sessionId);
             geminiAiService.clearChatSession(sessionId);
-            return RestResult.success("会话已清除");
+            return RestResult.success(null);
         } catch (Exception e) {
-            log.error("清除会话失败", e);
-            return RestResult.build(12002,"清除会话失败", null);
+            log.error("清除会话失败: sessionId={}", sessionId, e);
+            return RestResult.error("清除会话失败");
+        }
+    }
+
+    /**
+     * 刷新会话TTL
+     * POST /cartoon/ai/chat/{sessionId}/refresh
+     */
+    @PostMapping("/chat/{sessionId}/refresh")
+    public RestResult<Void> refreshSession(@PathVariable String sessionId) {
+        try {
+            log.info("收到刷新会话TTL请求: sessionId={}", sessionId);
+            geminiAiService.refreshSessionTtl(sessionId);
+            return RestResult.success(null);
+        } catch (Exception e) {
+            log.error("刷新会话TTL失败: sessionId={}", sessionId, e);
+            return RestResult.error("刷新会话失败");
+        }
+    }
+
+    /**
+     * 获取会话详情
+     * GET /cartoon/ai/chat/{sessionId}
+     */
+    @GetMapping("/chat/{sessionId}")
+    public RestResult<Map<String, Object>> getSessionDetails(@PathVariable String sessionId) {
+        try {
+            log.info("收到获取会话详情请求: sessionId={}", sessionId);
+            Map<String, Object> details = geminiAiService.getSessionDetails(sessionId);
+            return RestResult.success(details);
+        } catch (Exception e) {
+            log.error("获取会话详情失败: sessionId={}", sessionId, e);
+            return RestResult.error("获取会话详情失败");
         }
     }
 
     /**
      * 健康检查
-     * GET /ai/health
+     * GET /cartoon/ai/health-check
      */
+    @GetMapping("/health-check")
+    public RestResult<Map<String, Object>> healthCheck() {
+        try {
+            Map<String, Object> health = new HashMap<>();
+            health.put("status", "ok");
+            health.put("service", "Gemini AI with Redis");
+            health.put("activeSessions", geminiAiService.getActiveChatSessions());
+            health.put("timestamp", System.currentTimeMillis());
+
+            return RestResult.success(health);
+
+        } catch (Exception e) {
+            log.error("健康检查失败", e);
+            return RestResult.error("健康检查失败");
+        }
+    }
+
     @GetMapping("/health")
     public RestResult<Map<String, Object>> health() {
         return RestResult.success(Map.of(
@@ -167,4 +208,3 @@ public class AiController {
         ));
     }
 }
-
