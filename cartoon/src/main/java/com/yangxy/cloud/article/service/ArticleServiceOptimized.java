@@ -7,6 +7,7 @@ import com.yangxy.cloud.article.dto.ArticleDTO;
 import com.yangxy.cloud.article.entity.Article;
 import com.yangxy.cloud.article.mapper.ArticleDao;
 import com.yangxy.cloud.article.mapper.ArticleMapper;
+import com.yangxy.cloud.common.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -81,6 +82,19 @@ public class ArticleServiceOptimized extends ServiceImpl<ArticleDao, Article> {
         redisTemplate.opsForValue().set(viewKey, 0, 30, TimeUnit.DAYS);
 
         return articleMapper.toDTO(article);
+    }
+
+    /**
+     * 更新文章
+     */
+    @Transactional(rollbackFor = Exception.class)
+    public int updateArticle(ArticleCreateDTO updateDTO) {
+        String oldId = updateDTO.getId();
+        Article article = articleDao.selectById(oldId);
+        if (article == null) {
+            throw new BusinessException(11002, "文章不存在");
+        }
+        return articleDao.updateById(articleMapper.updateEntity(updateDTO));
     }
 
     /**

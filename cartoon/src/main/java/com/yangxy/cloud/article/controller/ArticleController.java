@@ -21,7 +21,7 @@ public class ArticleController {
 
     /**
      * 获取所有文章
-     * GET /api/articles
+     * GET /articles
      */
     @GetMapping("/all")
     public RestResult<List<ArticleDTO>> getAllArticles() {
@@ -31,7 +31,7 @@ public class ArticleController {
 
     /**
      * 根据ID获取文章
-     * GET /api/articles/{id}
+     * GET /articles/{id}
      */
     @GetMapping("/get/{id}")
     public RestResult<ArticleDTO> getArticleById(@PathVariable String id) {
@@ -42,7 +42,7 @@ public class ArticleController {
 
     /**
      * 创建新文章
-     * POST /api/articles
+     * POST /articles
      */
     @PostMapping("/create")
     public RestResult<ArticleDTO> createArticle(@RequestBody ArticleCreateDTO createDTO) {
@@ -52,7 +52,7 @@ public class ArticleController {
 
     /**
      * 删除文章
-     * DELETE /api/articles/{id}
+     * DELETE /articles/{id}
      */
     @DeleteMapping("/del/{id}")
     public RestResult<Void> deleteArticle(@PathVariable String id) {
@@ -64,8 +64,21 @@ public class ArticleController {
     }
 
     /**
+     * 更新文章
+     * PUT /articles/update/{id}
+     */
+    @PutMapping("/update")
+    public RestResult<Integer> updateArticle(@RequestBody ArticleCreateDTO updateDTO) {
+        int result = articleService.updateArticle(updateDTO);
+        if (result == 0) {
+            return RestResult.error("未更新任何内容！");
+        }
+        return RestResult.success(1);
+    }
+
+    /**
      * 增加文章浏览量
-     * POST /api/articles/{id}/increment-views
+     * POST /articles/{id}/increment-views
      */
     @PostMapping("/views/{id}")
     public RestResult<Integer> incrementViews(@PathVariable String id) {
@@ -75,7 +88,7 @@ public class ArticleController {
 
     /**
      * 按分类获取文章
-     * GET /api/articles/category/{category}
+     * GET /articles/category/{category}
      */
     @GetMapping("/category/{category}")
     public RestResult<List<ArticleDTO>> getArticlesByCategory(@PathVariable String category) {
@@ -85,7 +98,7 @@ public class ArticleController {
 
     /**
      * 按作者获取文章
-     * GET /api/articles/author/{author}
+     * GET /articles/author/{author}
      */
     @GetMapping("/author/{author}")
     public RestResult<List<ArticleDTO>> getArticlesByAuthor(@PathVariable String author) {
@@ -95,7 +108,7 @@ public class ArticleController {
 
     /**
      * 搜索文章
-     * GET /api/articles/search?keyword={keyword}
+     * GET /articles/search?keyword={keyword}
      */
     @GetMapping("/search")
     public RestResult<List<ArticleDTO>> searchArticles(@RequestParam String keyword) {

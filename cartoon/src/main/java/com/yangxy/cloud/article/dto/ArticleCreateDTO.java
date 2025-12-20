@@ -15,6 +15,8 @@ import java.util.List;
 @AllArgsConstructor
 public class ArticleCreateDTO {
 
+    private String id;
+
     private String title;
 
     private String excerpt;

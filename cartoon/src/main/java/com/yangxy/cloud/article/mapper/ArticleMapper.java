@@ -32,6 +32,8 @@ public interface ArticleMapper {
     @Mapping(target = "views", constant = "0")
     Article toEntity(ArticleCreateDTO createDTO);
 
+    Article updateEntity(ArticleCreateDTO updateDTO);
+
     /**
      * Entity List 转 DTO List
      */
