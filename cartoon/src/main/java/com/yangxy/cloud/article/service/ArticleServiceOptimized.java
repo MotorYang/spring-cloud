@@ -1,13 +1,18 @@
 package com.yangxy.cloud.article.service;
 
+import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.yangxy.cloud.article.dto.ArticleCreateDTO;
 import com.yangxy.cloud.article.dto.ArticleDTO;
+import com.yangxy.cloud.article.dto.ArticleFilterDTO;
 import com.yangxy.cloud.article.entity.Article;
 import com.yangxy.cloud.article.mapper.ArticleDao;
 import com.yangxy.cloud.article.mapper.ArticleMapper;
 import com.yangxy.cloud.common.exception.BusinessException;
+import com.yangxy.cloud.common.query.PageResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -36,6 +41,40 @@ public class ArticleServiceOptimized extends ServiceImpl<ArticleDao, Article> {
     // Redis Key 前缀
     private static final String VIEW_COUNT_KEY_PREFIX = "article:views:";
     private static final String VIEW_DELTA_KEY_PREFIX = "article:views:delta:";
+
+
+    /**
+     * 分页查询文章
+     * @param page 分页参数
+     * @param filter 查询参数
+     */
+    public PageResult<ArticleDTO> queryArticle(Page<Article> page, ArticleFilterDTO filter) {
+        LambdaQueryWrapper<Article> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByDesc(Article::getDate);
+        IPage<Article> iPage = null;
+        if (filter != null) {
+            wrapper.like(
+                    StringUtils.hasText(filter.getTitle()),
+                    Article::getTitle,
+                    filter.getTitle()
+            );
+            wrapper.eq(
+                    filter.getCategory() != null,
+                    Article::getCategory,
+                    filter.getCategory()
+            );
+            iPage = articleDao.selectPage(page, wrapper);
+        } else {
+            iPage = articleDao.selectPage(page, null);
+        }
+        List<ArticleDTO> dtoList = iPage.getRecords().stream().map(articleMapper::toDTO).toList();
+        PageResult<ArticleDTO> pageResult = new PageResult<>();
+        pageResult.setPage(iPage.getCurrent());
+        pageResult.setSize(iPage.getSize());
+        pageResult.setTotal(iPage.getTotal());
+        pageResult.setRecords(dtoList);
+        return pageResult;
+    }
 
     /**
      * 获取所有文章（按日期降序）

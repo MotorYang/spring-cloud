@@ -1,8 +1,13 @@
 package com.yangxy.cloud.article.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yangxy.cloud.article.dto.ArticleCreateDTO;
 import com.yangxy.cloud.article.dto.ArticleDTO;
+import com.yangxy.cloud.article.dto.ArticleFilterDTO;
+import com.yangxy.cloud.article.entity.Article;
 import com.yangxy.cloud.article.service.ArticleServiceOptimized;
+import com.yangxy.cloud.common.query.PageRequest;
+import com.yangxy.cloud.common.query.PageResult;
 import com.yangxy.cloud.common.response.RestResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +23,13 @@ import java.util.List;
 public class ArticleController {
 
     private final ArticleServiceOptimized articleService;
+
+    @PostMapping("/query")
+    public RestResult<PageResult<ArticleDTO>> query(@RequestBody PageRequest<ArticleFilterDTO> pageRequest) {
+        Page<Article> page = new Page<>(pageRequest.getPage(), pageRequest.getSize());
+        PageResult<ArticleDTO> pageResult = articleService.queryArticle(page, pageRequest.getFilter());
+        return RestResult.success(pageResult);
+    }
 
     /**
      * 获取所有文章
