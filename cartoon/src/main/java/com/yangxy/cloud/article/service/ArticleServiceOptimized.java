@@ -53,6 +53,12 @@ public class ArticleServiceOptimized extends ServiceImpl<ArticleDao, Article> {
         wrapper.orderByDesc(Article::getDate);
         IPage<Article> iPage = null;
         if (filter != null) {
+            if (filter.getSortOrder() != null && StringUtils.isNotBlank(filter.getSortOrder())) {
+                if (filter.getSortOrder().trim().equals("asc")) {
+                    wrapper.clear();
+                    wrapper.orderByAsc(Article::getDate);
+                }
+            }
             wrapper.like(
                     StringUtils.hasText(filter.getTitle()),
                     Article::getTitle,

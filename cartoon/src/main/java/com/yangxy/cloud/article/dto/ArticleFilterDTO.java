@@ -8,4 +8,6 @@ public class ArticleFilterDTO {
     private String title;
     private String category;
 
+    private String sortOrder; // desc or asc
+
 }
