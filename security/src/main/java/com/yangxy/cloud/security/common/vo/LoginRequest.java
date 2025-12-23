@@ -1,4 +1,4 @@
-package com.yangxy.cloud.security.vo;
+package com.yangxy.cloud.security.common.vo;
 
 /**
  * @author MotorYang
@@ -7,23 +7,23 @@ package com.yangxy.cloud.security.vo;
  */
 public class LoginRequest {
 
-    private String account;
+    private String username;
     private String password;
 
     public LoginRequest() {
     }
 
-    public LoginRequest(String account, String password) {
-        this.account = account;
+    public LoginRequest(String username, String password) {
+        this.username = username;
         this.password = password;
     }
 
-    public String getAccount() {
-        return account;
+    public String getUsername() {
+        return username;
     }
 
-    public void setAccount(String account) {
-        this.account = account;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getPassword() {

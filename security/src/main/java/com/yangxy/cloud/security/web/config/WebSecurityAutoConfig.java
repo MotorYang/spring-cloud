@@ -1,37 +1,36 @@
-package com.yangxy.cloud.security.config;
+package com.yangxy.cloud.security.web.config;
 
-import com.yangxy.cloud.security.filter.GatewayProtectFilter;
+import com.yangxy.cloud.security.web.interceptor.GatewayProtectFilter;
+import com.yangxy.cloud.security.web.interceptor.UserContextInterceptor;
+import jakarta.annotation.Resource;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-/**
- * @author MotorYang
- * @email motoyangxy@outlook.com
- * @date 2025/11/25 07:59
- */
-@Configuration
 @EnableWebSecurity
-// ⭐⭐⭐ 核心重点：加上这句话，Gateway 就会自动忽略这个类，不会报错 ⭐⭐⭐
+@Configuration
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-public class SystemSecurityConfig {
+@ConditionalOnClass(name = "org.springframework.web.servlet.config.annotation.WebMvcConfigurer")
+public class WebSecurityAutoConfig implements WebMvcConfigurer {
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-        // 既然 Gateway 已经把关，内部服务可以信任流量，或者做简单的 IP 白名单
-        // 这里配置为允许所有请求，并禁用 CSRF
-        httpSecurity
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
-        return httpSecurity.build();
+    public UserContextInterceptor userContextInterceptor() {
+        return new UserContextInterceptor();
+    }
+
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(userContextInterceptor())
+                .addPathPatterns("/**")
+                .excludePathPatterns("/system/auth/**");
     }
 
     @Bean

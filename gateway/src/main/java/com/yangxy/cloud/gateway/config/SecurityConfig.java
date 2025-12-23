@@ -2,7 +2,7 @@ package com.yangxy.cloud.gateway.config;
 
 import com.yangxy.cloud.gateway.properties.CorsProperties;
 import com.yangxy.cloud.gateway.properties.CustomGatewayProperties;
-import com.yangxy.cloud.security.utils.JwtUtils;
+import com.yangxy.cloud.security.common.utils.JwtUtils;
 import jakarta.annotation.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,10 +43,10 @@ public class SecurityConfig {
     @Resource
     private CustomGatewayProperties customGatewayProperties;
 
-    private Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
+    private final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
     @Bean
-    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
+    public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http) {
         // 配置自定义的 AuthenticationWebFilter
         AuthenticationWebFilter jwtFilter = new AuthenticationWebFilter(authenticationManager());
         jwtFilter.setServerAuthenticationConverter(new JwtAuthenticationConverter());
@@ -54,7 +54,6 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(exchange -> exchange
-                        // 放行登陆接口：注意这里匹配的是gateway转发后的路径
                         .pathMatchers(customGatewayProperties.getWhitelist().toArray(new String[0])).permitAll()
                         .anyExchange().authenticated()
                 )

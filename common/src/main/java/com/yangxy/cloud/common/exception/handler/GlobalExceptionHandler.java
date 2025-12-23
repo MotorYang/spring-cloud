@@ -36,6 +36,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public RestResult<Void> handleRuntimeException(RuntimeException e) {
         log.error("业务异常: {}", e.getMessage()); // 打印日志，方便排查
+        e.printStackTrace();
         // 将异常的 message (例如 "密码错误") 放入返回结果中
         return RestResult.error(e.getMessage());
     }

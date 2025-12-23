@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
  * @date 2025/11/24 17:30
  */
 @Configuration
-@MapperScan("com.yangxy.cloud.system.main.user.mapper")
+@MapperScan("com.yangxy.cloud.system.main.user.dao")
 public class UserConfig {
 
 }

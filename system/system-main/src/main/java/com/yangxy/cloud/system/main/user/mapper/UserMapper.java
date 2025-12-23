@@ -1,14 +1,21 @@
 package com.yangxy.cloud.system.main.user.mapper;
 
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.yangxy.cloud.system.main.user.entity.UserEntity;
+import com.yangxy.cloud.system.main.user.dto.UserDTO;
+import com.yangxy.cloud.system.main.user.entity.User;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.factory.Mappers;
 
-/**
- * @author MotorYang
- * @email motoyangxy@outlook.com
- * @date 2025/11/24 17:10
- */
-public interface UserMapper extends BaseMapper<UserEntity> {
+@Mapper
+public interface UserMapper {
 
+    UserMapper INSTANCE = Mappers.getMapper(UserMapper.class);
+
+    UserDTO toDTO(User user);
+
+    User toEntity(UserDTO userDTO);
+
+    @Mapping(target = "id", ignore = true)
+    User createEntity(UserDTO userDTO);
 
 }

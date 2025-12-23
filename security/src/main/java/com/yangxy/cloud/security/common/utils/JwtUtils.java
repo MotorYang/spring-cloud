@@ -1,4 +1,4 @@
-package com.yangxy.cloud.security.utils;
+package com.yangxy.cloud.security.common.utils;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -72,8 +72,8 @@ public class JwtUtils {
             throw new RuntimeException("RefreshToken已过期或无效");
         }
         String account = getUserAccount(refreshToken);
-        Long userId = getUserId(refreshToken);
-        return generateTokens(account, userId.toString());
+        String userId = getUserId(refreshToken);
+        return generateTokens(account, userId);
     }
 
     /**
@@ -98,8 +98,8 @@ public class JwtUtils {
     /**
      * 获取用户ID
      */
-    public static Long getUserId(String token) {
-        return getClaims(token).get("userId", Long.class);
+    public static String getUserId(String token) {
+        return getClaims(token).get("userId", String.class);
     }
 
     /**

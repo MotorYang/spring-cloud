@@ -1,35 +1,30 @@
 package com.yangxy.cloud.system.main.user.service;
 
-import com.yangxy.cloud.system.main.user.dto.User;
+import com.alibaba.nacos.common.utils.StringUtils;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.yangxy.cloud.system.main.user.dao.UserDAO;
+import com.yangxy.cloud.system.main.user.entity.User;
+import jakarta.annotation.Resource;
+import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+@Service("userService")
+public class UserService {
 
-/**
- * @author MotorYang
- * @email motoyangxy@outlook.com
- * @date 2025/11/24 17:23
- */
-public interface UserService {
-
-    /**
-     * 获取所有用户
-     *
-     * @return 用户列表
-     */
-    List<User> getAllUser();
+    @Resource
+    private UserDAO userDAO;
 
     /**
-     * 根据账号获取用户
-     *
-     * @param account 用户账号
+     * 根据账户获取用户
+     * @param username 账户
      * @return 用户信息
      */
-    Optional<User> getUserByAccount(String account);
-
-    /**
-     * 创建一些测试用户
-     */
-    void createTestData();
+    public User getUser(String username) {
+        if (username == null || StringUtils.isBlank(username)){
+            return null;
+        }
+        QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+        queryWrapper.eq("username", username);
+        return userDAO.selectOne(queryWrapper);
+    }
 
 }
